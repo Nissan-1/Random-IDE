@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>PocketCode</title>
+<style>
+:root{--bg:#020617;--s:#0f172a;--b:#1e293b;--t:#e2e8f0;--m:#64748b;--g:#10b981;--c:#06b6d4;--r:#f43f5e;--a:#f59e0b;--fs:15px;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:inherit;margin:0}
+html,body{height:100%;background:var(--bg);color:var(--t);font:14px system-ui,sans-serif;overflow:hidden;overscroll-behavior:none}
+button,select,input{font:inherit;color:inherit;background:var(--s);border:1px solid var(--b);border-radius:8px;padding:6px 10px}
+button:active{background:var(--b)}
+.mono,textarea,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#app{display:flex;flex-direction:column;height:100%}
+header,nav{display:flex;gap:6px;padding:6px;background:var(--s);border-bottom:1px solid var(--b);align-items:center}
+nav{border:0;border-top:1px solid var(--b)}nav button{flex:1}
+nav .on{border-color:var(--c);color:var(--c)}
+#run{background:var(--g);color:#022;border:0;font-weight:700}
+#fname{flex:1;min-width:0;text-overflow:ellipsis;font-weight:600}
+main{flex:1;min-height:0;position:relative}
+section{position:absolute;inset:0;display:flex;flex-direction:column}
+[hidden]{display:none!important}
+#wrap{flex:1;min-height:0;display:flex;position:relative}
+#gut{width:44px;overflow:hidden;background:var(--s);color:var(--m);text-align:right;padding:8px 6px 8px 0;font-size:var(--fs);line-height:calc(var(--fs)*1.5);white-space:pre;user-select:none}
+#gut .e{color:#fff;background:var(--r)}#gut .w{color:#000;background:var(--a)}
+#ta{flex:1;min-width:0;background:var(--bg);color:var(--t);border:0;outline:0;resize:none;padding:8px;font-size:var(--fs);line-height:calc(var(--fs)*1.5);white-space:pre;overflow:auto;tab-size:4;caret-color:var(--c)}
+#diag{max-height:76px;overflow:auto;border-top:1px solid var(--b);background:var(--s);font-size:12px}
+#diag div{padding:3px 8px;white-space:nowrap}.e{color:var(--r)}.w{color:var(--a)}.ok{color:var(--g)}
+#st{padding:3px 8px;font-size:11px;color:var(--m);background:var(--s);border-top:1px solid var(--b);display:flex;justify-content:space-between}
+#acc{display:none;background:var(--s);border-top:1px solid var(--b);padding:4px;gap:4px;flex-direction:column}
+#acc.on{display:flex}#acc div{display:flex;gap:4px}#acc button{flex:1;padding:9px 0;font-size:12px}
+.tool{display:flex;gap:6px;padding:6px;background:var(--s);border-bottom:1px solid var(--b);align-items:center}
+#out{flex:1;min-height:0;overflow:auto;padding:8px;font-size:13px;white-space:pre-wrap;word-break:break-word}
+#sin{width:100%;height:84px;background:var(--bg);border:0;border-top:1px solid var(--b);color:var(--t);padding:8px;font-size:13px;resize:none;outline:0}
+.ln-e{color:var(--r)}.ln-i{color:var(--c)}.ln-s{color:var(--g)}
+#drawer{position:absolute;inset:0;z-index:9;display:flex}
+#dr{width:min(82%,320px);background:var(--s);border-right:1px solid var(--b);padding:10px;display:flex;flex-direction:column;gap:8px;overflow:auto}
+#dback{flex:1;background:rgba(2,6,23,.6);backdrop-filter:blur(3px)}
+.f{display:block;width:100%;text-align:left}.f.on{border-color:var(--c);color:var(--c)}
+.row{display:flex;gap:6px}.row>*{flex:1}
+</style></head><body>
+<div id="app">
+<header><button id="menu">☰</button><span id="fname"></span><select id="lang"></select><button id="run">▶ Run</button></header>
+<main>
+<section id="ed">
+ <div id="wrap"><div id="gut"></div><textarea id="ta" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea></div>
+ <div id="diag"></div><div id="st"><span id="pos"></span><span id="info"></span></div>
+ <div id="acc"><div><button>ESC</button><button>HOME</button><button>↑</button><button>END</button><button>PGUP</button></div><div><button>TAB</button><button>←</button><button>↓</button><button>→</button><button>PGDN</button></div></div>
+</section>
+<section id="tm" hidden>
+ <div class="tool"><b id="stat" class="mono" style="flex:1;font-size:12px">Idle</b><button id="cpo">Copy</button><button id="clo">Clear</button></div>
+ <pre id="out"></pre>
+ <textarea id="sin" placeholder="Program input (stdin) goes here, one value per line…" spellcheck="false"></textarea>
+</section>
+</main>
+<nav><button id="tE" class="on">Editor</button><button id="tT">Terminal</button></nav>
+<div id="drawer" hidden><div id="dr">
+ <b>PocketCode</b>
+ <input id="rn" placeholder="File name">
+ <div class="row"><button id="nw">+ New</button><button id="dup">Duplicate</button></div>
+ <div class="row"><button id="cp">Copy code</button><button id="cl">Clear code</button></div>
+ <div class="row"><button id="fm">A−</button><button id="fp">A+</button></div>
+ <div class="row"><button id="imp">Import file</button><button id="del" style="color:var(--r)">Delete</button></div>
+ <input type="file" id="fi" hidden>
+ <div id="list" style="display:flex;flex-direction:column;gap:6px"></div>
+</div><div id="dback"></div></div>
+</div>
+<script>
+const $=s=>document.querySelector(s),ta=$('#ta');
+const T={
+cpp:'#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n;\n    cin >> n;\n    cout << n * 2 << "\\n";\n    return 0;\n}\n',
+c:'#include <stdio.h>\n\nint main() {\n    int n;\n    scanf("%d", &n);\n    printf("%d\\n", n * 2);\n    return 0;\n}\n',
+python:'n = int(input())\nprint(n * 2)\n',
+java:'import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int n = sc.nextInt();\n        System.out.println(n * 2);\n    }\n}\n',
+js:'const n = parseInt(input());\nconsole.log(n * 2);\n'};
+const L={cpp:{n:'C++',id:54},c:{n:'C',id:50},python:{n:'Python',id:71},java:{n:'Java',id:62},js:{n:'JavaScript'}};
+const KW={
+cpp:'if else for while do switch case default break continue return int long short char float double bool void unsigned signed const static auto struct class public private protected template typename namespace using typedef new delete true false nullptr NULL sizeof try catch throw enum inline constexpr this operator virtual override std string vector map set unordered_map unordered_set multiset multimap pair make_pair tuple array deque queue stack priority_queue bitset list cin cout cerr endl getline sort reverse min max abs swap to_string stoi stoll stod sqrt pow floor ceil log log2 exp lower_bound upper_bound binary_search accumulate iota fill memset memcpy gcd lcm __gcd ios sync_with_stdio tie fixed setprecision printf scanf puts putchar getchar fprintf stdin stdout stderr INT_MAX INT_MIN LLONG_MAX LLONG_MIN UINT_MAX unique next_permutation max_element min_element count find begin end rbegin rend size_t int64_t uint64_t ll ull greater less function sin cos tan atan2 fabs round trunc isdigit isalpha tolower toupper strlen strcmp strcpy rand srand time clock main emplace_back push_back nth_element shuffle mt19937 random_device chrono assert',
+java:'if else for while do switch case default break continue return int long short char float double boolean byte void final static class public private protected new this super true false null try catch finally throw throws import package interface extends implements instanceof enum abstract String System Math Scanner Integer Long Double Character Boolean Arrays Collections List ArrayList LinkedList Map HashMap TreeMap Set HashSet TreeSet Queue Deque ArrayDeque PriorityQueue Stack Object StringBuilder BufferedReader InputStreamReader PrintWriter StringTokenizer Random Iterator Comparator Optional java javax util io var out in err main args length',
+js:'if else for while do switch case default break continue return var let const function class new this super true false null undefined try catch finally throw typeof instanceof in of async await yield import export from delete void NaN Infinity console Math JSON Array Object String Number Boolean Map Set WeakMap Promise Date RegExp Symbol BigInt Error parseInt parseFloat isNaN isFinite require process readline input module exports setTimeout setInterval globalThis arguments',
+python:'if elif else for while def class return import from as in is not and or None True False pass break continue try except finally raise with lambda yield global nonlocal del assert print input int str float len range list dict set tuple sum min max abs sorted enumerate zip map filter open bool type isinstance reversed any all round divmod pow chr ord bin hex oct id iter next repr format frozenset bytes object super self cls Exception ValueError TypeError IndexError KeyError StopIteration __name__ exit quit'};
+KW.c=KW.cpp;
+const ID=s=>s.match(/[A-Za-z_]\w*/g)||[];
+function strip(code,lang){
+ const py=lang=='python',E=[],st=[],n=code.length,P={')':'(',']':'[','}':'{'};let o='',i=0,ln=1;
+ while(i<n){const ch=code[i],nx=code[i+1];
+  if(ch=='\n'){o+=ch;ln++;i++;continue}
+  if(py?ch=='#':(ch=='/'&&nx=='/')){while(i<n&&code[i]!='\n'){o+=' ';i++}continue}
+  if(!py&&ch=='/'&&nx=='*'){const e=code.indexOf('*/',i+2),end=e<0?n:e+2,sl=ln;for(;i<end;i++){if(code[i]=='\n'){ln++;o+='\n'}else o+=' '}if(e<0)E.push({line:sl,msg:'Unclosed /* comment',sev:'e'});continue}
+  if((lang=='cpp'||lang=='c')&&ch=='#'&&/^\s*$/.test(o.slice(o.lastIndexOf('\n')+1))){while(i<n&&code[i]!='\n'){o+=' ';i++}continue}
+  if(ch=='"'||ch=="'"||ch=='`'){const q=ch,sl=ln;
+   if(py&&code.substr(i,3)==q.repeat(3)){const e=code.indexOf(q.repeat(3),i+3),end=e<0?n:e+3;for(;i<end;i++){if(code[i]=='\n'){ln++;o+='\n'}else o+='~'}if(e<0)E.push({line:sl,msg:'Unterminated triple-quoted string',sev:'e'});continue}
+   o+=q;i++;let ok=false;
+   while(i<n){const c=code[i];if(c=='\\'){o+='~~';i+=2;continue}if(c==q){ok=true;o+=q;i++;break}if(c=='\n'){if(q!='`')break;ln++;o+='\n'}else o+='~';i++}
+   if(!ok)E.push({line:sl,msg:'Unterminated string',sev:'e'});continue}
+  if('([{'.includes(ch))st.push([ch,ln]);
+  else if(')]}'.includes(ch)){const t=st.pop();if(!t)E.push({line:ln,msg:`Unexpected '${ch}'`,sev:'e'});else if(t[0]!=P[ch])E.push({line:ln,msg:`'${ch}' doesn't match '${t[0]}' from line ${t[1]}`,sev:'e'})}
+  o+=ch;i++}
+ st.forEach(([c,l])=>E.push({line:l,msg:`Unclosed '${c}'`,sev:'e'}));
+ return{c:o,E}}
+function syn(c,lang,code){
+ const py=lang=='python',cl=!py,E=[],T=[];let ln=1;
+ const TW=new Set('int long short char float double bool boolean byte void auto unsigned signed const static size_t ll ull pii string vector map set pair array deque queue stack list bitset tuple priority_queue unordered_map unordered_set multiset multimap int64_t uint64_t Integer Long Double Character Boolean String Scanner ArrayList List Map HashMap Set HashSet Object StringBuilder final public private protected abstract synchronized volatile register extern inline constexpr mutable struct class enum union interface'.split(' '));
+ const KP=new Set('typename namespace using typedef explicit friend virtual template extends implements import package throws operator new delete return else case throw goto typeof in of do sizeof static_cast dynamic_cast reinterpret_cast const_cast instanceof'.split(' '));
+ const PK=new Set('if elif else for while def class return import from as in is not and or None True False pass break continue try except finally raise with lambda yield global nonlocal del assert await async'.split(' '));
+ const ut=new Set(),vars=new Set(),KW=py?PK:KP,PRE=py?PK:new Set([...TW,...KP]);
+ for(const m of c.matchAll(/\b(?:class|struct|enum|union|typename|using|interface)\s+(\w+)/g))ut.add(m[1]);
+ for(const m of c.matchAll(/typedef\s[^;]*?(\w+)\s*;/g))ut.add(m[1]);
+ (code.match(/#define\s+\w+/g)||[]).forEach(x=>ut.add(x.split(/\s+/)[1]));
+ const re=new RegExp('(\\.?\\d[\\w.]*(?:[eE][+-]\\d+)?)|((?:(?:[rRbBfFuUL]|u8){0,2}(?:"[^"\\n]*"|\'[^\'\\n]*\'|`[^`\\n]*`))'+(py?'|~{2,}':'')+')|([A-Za-z_$][\\w$]*)|(\\.\\.\\.|->|::|\\+\\+|--|<<=|>>=|\\*\\*|\\/\\/|:=|[<>=!+\\-*\\/%&|^]=|<<|>>|&&|\\|\\||\\[[ \\t]*\\]|[\\s\\S])','g');
+ for(const m of c.matchAll(re)){const s=m[0];if(s=='\n'){ln++;continue}if(/^\s$/.test(s))continue;T.push({v:s,l:ln,k:m[1]?'n':m[2]?'s':m[3]?'i':((s[0]=='['&&s.length>1)||s=='...')?'t':'o'})}
+ T.forEach((t,i)=>{const p=T[i-1];if(t.k=='i'&&p&&((p.k=='i'&&(TW.has(p.v)||ut.has(p.v))&&!/^(class|struct|enum|union|interface)$/.test(p.v))||(p.k=='o'&&/^(>|>>|\*|&)$/.test(p.v))))vars.add(t.v)});
+ const val=p=>!!p&&(p.k=='n'||p.k=='i'||p.k=='s'||p.k=='t'||p.v==')'||p.v==']');
+ const soft=p=>val(p)||(!!p&&p.k=='o'&&/^(\*|&|>|>>)$/.test(p.v));
+ const UN=new Set(['!','~','-','+','*','&','++','--','::','**'].concat(lang=='java'||py?['@']:[]));
+ const BIN=new Set('= == != < > <= >= + - * / % & | ^ && || << >> += -= *= /= %= &= |= ^= <<= >>= ? , . -> <=> // := **'.split(' '));
+ const CTL=/^(if|for|while|switch|catch|return|sizeof|else|do)$/,QUAL=/^(const|override|final|noexcept|throws|volatile|mutable)$/;
+ const bad=py?/^[$?!`\\]$/:(lang=='java'?/^[$`\\#]$/:/^[@$`\\#]$/);
+ const add=(l,msg)=>E.push({line:l,msg,sev:'e'});
+ const split=(a,b)=>{let d=0;const g=[[]];for(let x=a;x<b;x++){const w=T[x],v=w.v;let cut=false;if((w.k=='o'&&v.length==1&&'([{'.includes(v))||v=='<')d++;else if((w.k=='o'&&v.length==1&&')]}'.includes(v))||v=='>')d--;else if(v=='>>')d-=2;else if(v==','&&d<=0)cut=true;if(cut)g.push([]);else g[g.length-1].push(w)}return g};
+ const allow=(pv,t)=>(pv.k=='i'&&(t.k=='i'?(PRE.has(pv.v)||ut.has(pv.v)):KW.has(pv.v)))||(py&&t.k=='i'&&PK.has(t.v))||(cl&&t.k=='i'&&pv.k=='i'&&!vars.has(pv.v))||(pv.v==')'&&(pv.cast||pv.ctl||(t.k=='i'&&QUAL.test(t.v))))||((pv.v=='[]'||pv.v=='...')&&t.k=='i')||(pv.k=='s'&&t.k=='s')||!!t.ann;
+ let pv=null,q=0,ss=[];const st=[],fn=Object.create(null),defIdx=new Set();
+ T.forEach((t,i)=>{const v=t.v,nx=T[i+1];
+  if(py&&pv&&pv.l!=t.l&&!st.length)pv=null;
+  const ss0=!pv||(pv.k=='o'&&/^[;{}]$/.test(pv.v))||pv.lab||(cl&&(pv.v=='else'||pv.v=='do'));
+  if(t.k=='o'){
+   if(bad.test(v)){add(t.l,`Invalid character '${v}'`);pv=t;return}
+   if((v=='++'||v=='--')&&val(pv)&&(cl||pv.l==t.l))t.k='t';
+   else{
+    if((v=='!'||v=='~')&&val(pv))add(t.l,`Unexpected '${v}' after '${pv.v}'`);
+    if(BIN.has(v)&&!UN.has(v)){
+     const ok=val(pv)||(v==','&&(soft(pv)||(!!pv&&pv.v=='}')))||(!!pv&&(((v=='>'||(v=='?'&&lang=='java'))&&pv.v=='<')||(v=='='&&pv.v=='['&&!!nx&&/^[\],]$/.test(nx.v))));
+     if(!ok)add(t.l,pv&&!ss0?`Unexpected '${v}' after '${pv.v}'`:`'${v}' can't start a statement`)}
+    if(v=='?'&&cl&&!(pv&&pv.v=='<'))q++;
+    if(v==':'&&cl){const f=ss[0],top=st[st.length-1];
+     if(q>0)q--;
+     else if(top&&top.kw=='for'){}
+     else if(!st.length&&f&&(/^(case|default|public|private|protected|class|struct|enum|union)$/.test(f.v)||ss.length<=2||ss.some(x=>x.v==')'))){if(/^(case|default|public|private|protected)$/.test(f.v)||ss.length<=1)t.lab=true}
+     else add(t.l,"Unexpected ':'")}
+    if(v.length==1&&'([{'.includes(v))st.push({c:v,kw:pv&&pv.v,f:i});
+    if(v.length==1&&')]}'.includes(v)){const o=st.pop();
+     if(v==')'&&o){const ctn=T.slice(o.f+1,i);t.ctl=!!o.kw&&(CTL.test(o.kw)||ut.has(o.kw));
+      t.cast=ctn.length>0&&ctn.every(x=>(x.k=='i'&&(PRE.has(x.v)||ut.has(x.v)))||x.v=='[]'||(x.k=='o'&&/^(\*|&|::|<|>|>>|,)$/.test(x.v)));
+      const nm=T[o.f-1],pp=T[o.f-2];
+      if(nm&&nm.k=='i'&&(py?(pp&&pp.v=='def'):(!CTL.test(nm.v)&&pp&&((pp.k=='i'&&(TW.has(pp.v)||ut.has(pp.v)))||(pp.k=='o'&&/^(>|\*|&)$/.test(pp.v)))&&nx&&(nx.v=='{'||(QUAL.test(nx.v)&&T[i+2]&&T[i+2].v=='{')||(nx.v==';'&&(pp.k=='i'||pp.v=='>')&&!ctn.some(x=>x.k=='n'||x.k=='s')))))){
+       const g=split(o.f+1,i);let r;
+       if(py)r=(g[0]&&g[0][0]&&/^(self|cls)$/.test(g[0][0].v))?null:(g.length==1&&!g[0].length)?[0,0]:[g.filter(x=>x.length&&!x.some(y=>y.v=='=')&&!/^\*/.test(x[0].v)).length,g.some(x=>x[0]&&/^\*/.test(x[0].v))?99:g.length];
+       else r=(g.length==1&&(!g[0].length||(g[0].length==1&&g[0][0].v=='void')))?[0,0]:[g.filter(x=>!x.some(y=>y.v=='='||y.v=='...')).length,g.some(x=>x.some(y=>y.v=='...'))?99:g.length];
+       const p0=fn[nm.v];fn[nm.v]=r&&(p0===undefined?r:(p0&&[Math.min(p0[0],r[0]),Math.max(p0[1],r[1])]));defIdx.add(o.f-1)}}}
+    if(/^[)\]};]$/.test(v)&&pv&&pv.k=='o'&&!/^[(\[{})\];:]$/.test(pv.v)&&!pv.lab&&!soft(pv)&&!(v=='}'&&pv.v==','))add(t.l,`Expression expected before '${v}'`);
+    if(v==','&&(!nx||(/^[)\];]$/.test(nx.v)&&!(py&&nx.v!=';'))))add(t.l,"Expected an expression after ','");
+   }
+  }else{
+   if(t.k=='i'&&pv&&pv.k=='o'&&pv.v=='@')t.ann=true;
+   if(t.k!='t'&&val(pv)&&!allow(pv,t)){const x=cl&&pv.l!=t.l;add(x?pv.l:t.l,x?"Missing ';' at end of line?":`Unexpected '${v}' after '${pv.v}'`)}
+   if(cl&&t.k=='i'&&/^(if|else|for|while|do|switch|case|default|break|continue|return)$/.test(v)&&pv&&pv.k=='o'&&!/^[(\[{})\];:]$/.test(pv.v)&&!pv.lab)add(t.l,`Unexpected '${v}' after '${pv.v}'`)}
+  pv=t;if(t.k=='o'&&v==';')q=0;
+  if(t.k=='o'&&/^[;{}]$/.test(v))ss=[];else ss.push(t)});
+ if(pv&&pv.k=='o'&&!/^[(\[{})\];:]$/.test(pv.v)&&!soft(pv)&&!pv.lab)add(pv.l,`Expression expected after '${pv.v}'`);
+ const STD=py?{len:[1,1],abs:[1,1],range:[1,3],int:[0,2],str:[0,3],float:[0,1],bool:[0,1],sum:[1,2],input:[0,1],ord:[1,1],chr:[1,1],divmod:[2,2],pow:[2,3],sorted:[1,3],enumerate:[1,2],isinstance:[2,2],reversed:[1,1],round:[1,2],any:[1,1],all:[1,1]}:lang!='java'?{max:[1,2],min:[1,2],swap:[2,2],abs:[1,1],sqrt:[1,1],pow:[2,2],gcd:[2,2],__gcd:[2,2],to_string:[1,1],reverse:[2,2],floor:[1,1],ceil:[1,1],sort:[2,3],memset:[3,3],lower_bound:[3,4],upper_bound:[3,4],stoi:[1,3]}:{};
+ T.forEach((t,i)=>{if(t.k!='i'||!T[i+1]||T[i+1].v!='(')return;const p=T[i-1];
+  if(defIdx.has(i)||(p&&(p.v=='.'||p.v=='->'||(p.v=='::'&&!(T[i-2]&&T[i-2].v=='std')))))return;
+  const f=(t.v in fn)?fn[t.v]:Object.prototype.hasOwnProperty.call(STD,t.v)?STD[t.v]:null;if(!f)return;
+  let d=0,j=i+1;for(;j<T.length;j++){const x=T[j];if(x.k=='o'&&x.v.length==1){if('([{'.includes(x.v))d++;else if(')]}'.includes(x.v)){d--;if(!d)break}}}
+  const a=T.slice(i+2,j);if(a.some(x=>x.k=='o'&&/^(<|>|>>)$/.test(x.v)))return;
+  const n=a.length?split(i+2,j).length:0;
+  if(n<f[0]||n>f[1])add(t.l,`'${t.v}' expects ${f[0]==f[1]?f[0]:f[0]+(f[1]>50?'+':'-'+f[1])} argument${f[1]==1?'':'s'} but got ${n}`)});
+ return E}
+function lint(code,lang){
+ const{c,E}=strip(code,lang),Ls=c.split('\n'),py=lang=='python',cl=!py&&lang!='js',ind=s=>s.match(/^\s*/)[0].length;
+ const S0=E.length;Ls.forEach((s,k)=>{const t=s.trim();if(!t)return;let nj=-1;for(let j=k+1;j<Ls.length;j++)if(Ls[j].trim()){nj=j;break}
+  const nt=nj<0?'':Ls[nj].trim();
+  if(py){if((/^(if|elif|for|while|def|class|with|except)\b/.test(t)&&!t.includes(':'))||/^(else|try|finally)\s*$/.test(t))E.push({line:k+1,msg:"Missing ':' at end of line",sev:'e'});
+   else if(t.endsWith(':')&&nj>=0&&ind(Ls[nj])<=ind(s))E.push({line:k+1,msg:'Expected an indented block after this line',sev:'e'})}
+  else if(cl&&/(\w|\)|\]|"|'|\+\+|--)$/.test(t)&&!/^(if|for|while|else|switch|do|case|default|public|private|protected|template|class|struct|namespace|try|catch|finally|enum|interface|@)/.test(t)&&!/^[{.?:|&+\-*\/=<>,)\]]/.test(nt)&&!/^(public|private|protected|static|final|abstract)\b.*\)$/.test(t)&&!(nt.startsWith('{')))
+   E.push({line:k+1,msg:"Missing ';' at end of statement?",sev:'e'})});
+ if(lang=='js'&&!E.length){try{new Function(code)}catch(e){E.push({line:1,msg:e.message,sev:'e'})}}
+ if(!S0&&lang!='js')E.push(...syn(c,lang,code));
+ if(E.length){const k=new Set();return E.filter(e=>{const x=e.line+e.msg;if(k.has(x))return false;k.add(x);return true}).sort((a,b)=>a.line-b.line)}
+ const dec=new Set([...KW[lang].split(' ')]),add=s=>s&&dec.add(s),R=(re,f)=>{for(const m of c.matchAll(re))f(m)};
+ (code.match(/#define\s+\w+/g)||[]).forEach(x=>add(x.split(/\s+/)[1]));
+ if(py){
+  R(/\bdef\s+(\w+)\s*\(([^)]*)\)/g,m=>{add(m[1]);ID(m[2]).forEach(add)});R(/\bclass\s+(\w+)/g,m=>add(m[1]));
+  R(/^[ \t]*(?:from\s+\S+\s+)?import\s+(.+)$/gm,m=>ID(m[1]).forEach(add));R(/\bas\s+(\w+)/g,m=>add(m[1]));
+  R(/\bfor\s+(.+?)\s+in\b/g,m=>ID(m[1]).forEach(add));R(/\blambda\s*([^:]*):/g,m=>ID(m[1]).forEach(add));
+  R(/^[ \t]*([\w ,\[\].*()]+?)[ \t]*(?:[-+*\/%&|^]|\/\/|\*\*)?=(?!=)/gm,m=>ID(m[1]).forEach(add));R(/[(,]\s*(\w+)\s*=(?!=)/g,m=>add(m[1]))}
+ else if(lang=='js'){
+  R(/\b(?:let|const|var|function|class)\s+(\w+)/g,m=>add(m[1]));R(/\b(?:let|const|var)\s*[\[{]([^\]}]*)[\]}]/g,m=>ID(m[1]).forEach(add));
+  R(/function\s*\w*\s*\(([^)]*)\)/g,m=>ID(m[1]).forEach(add));R(/\(([^()]*)\)\s*=>/g,m=>ID(m[1]).forEach(add));R(/(\w+)\s*=>/g,m=>add(m[1]));R(/catch\s*\((\w+)/g,m=>add(m[1]))}
+ else{
+  R(/\b(\w+)(?:\s*[*&]+\s*|\s+[*&]*\s*)([A-Za-z_]\w*)/g,m=>{if(!/^(return|else|new|delete|case|throw|goto|in|and|or|not)$/.test(m[1]))add(m[2])});
+  R(/\]\s*(\w+)\s*[=;,)]/g,m=>add(m[1]));R(/\w\s*<[^;(){}]*>\s*[*&]*\s*(\w+)/g,m=>add(m[1]));R(/using\s+(\w+)\s*=/g,m=>add(m[1]));R(/typedef\s[^;]*?(\w+)\s*;/g,m=>add(m[1]));
+  const TY=new Set('int long short char float double bool string auto unsigned signed size_t ll ull pii vector map set pair array for'.split(' '));
+  Ls.forEach(s=>{const w=(s.trim().match(/^\w+/)||[''])[0];if(TY.has(w)||dec.has(w)&&/^\s*\w+[\s<*&]/.test(s)&&/;\s*$/.test(s))R.call(0,/,\s*[*&]*([A-Za-z_]\w*)\s*(?=[=\[,;])/g,()=>0),[...s.matchAll(/,\s*[*&]*([A-Za-z_]\w*)\s*(?=[=\[,;])/g)].forEach(m=>add(m[1]))})}
+ const seen=new Set(),W=[];
+ for(const m of c.matchAll(/(?<!\w)[A-Za-z_]\w*/g)){const w=m[0];if(dec.has(w))continue;
+  let j=m.index-1;while(j>=0&&(c[j]==' '||c[j]=='\t'))j--;const p2=c.slice(Math.max(0,j-1),j+1);
+  if(c[j]=='.'||p2=='::'||p2=='->')continue;
+  if(/^\s*:/.test(c.slice(m.index+w.length,m.index+w.length+3)))continue;
+  const ln=c.slice(0,m.index).split('\n').length;if(seen.has(ln+w))continue;seen.add(ln+w);W.push({line:ln,msg:`'${w}' is not declared (typo?)`,sev:'w'})}
+ return W}
+/* ---------- state ---------- */
+let S={files:[],cur:0,fs:15},D=[],lt;
+try{S=JSON.parse(localStorage.getItem('pc')||'null')||S}catch(e){}
+const uid=()=>Math.random().toString(36).slice(2,8);
+if(!S.files.length)S.files=[{id:uid(),name:'main',lang:'cpp',code:T.cpp,sin:'5'}];
+const F=()=>S.files[S.cur];
+const save=()=>{try{localStorage.setItem('pc',JSON.stringify(S))}catch(e){}};
+function gut(){const n=ta.value.split('\n').length,m={};D.forEach(d=>{m[d.line]=m[d.line]=='e'?'e':d.sev});
+ $('#gut').innerHTML=Array.from({length:n},(_,i)=>`<div${m[i+1]?` class="${m[i+1]}"`:''}>${i+1}</div>`).join('');$('#gut').scrollTop=ta.scrollTop}
+function doLint(){D=lint(ta.value,F().lang);gut();
+ $('#diag').innerHTML=D.length?D.slice(0,30).map(d=>`<div class="${d.sev}" data-l="${d.line}">${d.sev=='e'?'✖':'▲'} Ln ${d.line}: ${d.msg}</div>`).join(''):'<div class="ok">✔ No problems found</div>';
+ $('#info').textContent=`${ta.value.split('\n').length} lines · ${D.filter(d=>d.sev=='e').length} errors · ${D.filter(d=>d.sev=='w').length} warnings`}
+function pos(){const v=ta.value.slice(0,ta.selectionStart).split('\n');$('#pos').textContent=`Ln ${v.length}, Col ${v[v.length-1].length+1}`}
+function load(){const f=F();ta.value=f.code;$('#fname').textContent=f.name+'.'+({python:'py',js:'js'}[f.lang]||f.lang);$('#lang').value=f.lang;$('#rn').value=f.name;$('#sin').value=f.sin||'';
+ document.documentElement.style.setProperty('--fs',S.fs+'px');doLint();pos();
+ $('#list').innerHTML=S.files.map((x,i)=>`<button class="f ${i==S.cur?'on':''}" data-i="${i}">${x.name} <small>· ${L[x.lang].n}</small></button>`).join('')}
+$('#lang').innerHTML=Object.entries(L).map(([k,v])=>`<option value="${k}">${v.n}</option>`).join('');
+$('#lang').onchange=e=>{const f=F();if(f.code.trim()==T[f.lang].trim()||!f.code.trim())f.code=T[e.target.value];f.lang=e.target.value;save();load()};
+ta.oninput=()=>{F().code=ta.value;clearTimeout(lt);lt=setTimeout(()=>{doLint();save()},250);gut()};
+ta.onscroll=()=>$('#gut').scrollTop=ta.scrollTop;
+['keyup','click','select'].forEach(e=>ta.addEventListener(e,pos));
+$('#sin').oninput=e=>{F().sin=e.target.value;save()};
+$('#diag').onclick=e=>{const l=+e.target.dataset.l;if(!l)return;const ls=ta.value.split('\n');let p=0;for(let i=0;i<l-1;i++)p+=ls[i].length+1;ta.focus();ta.setSelectionRange(p,p);ta.scrollTop=(l-3)*S.fs*1.5;pos()};
+/* ---------- accessory bar ---------- */
+const lh=()=>S.fs*1.5;
+function mv(k){const v=ta.value,ls=v.split('\n');let p=ta.selectionStart,a=v.slice(0,p).split('\n'),r=a.length-1,c=a[r].length;
+ const gp=(r,c)=>{r=Math.max(0,Math.min(ls.length-1,r));let q=0;for(let i=0;i<r;i++)q+=ls[i].length+1;return q+Math.min(c,ls[r].length)};
+ let np=p;
+ if(k=='←')np=Math.max(0,p-1);if(k=='→')np=Math.min(v.length,p+1);
+ if(k=='↑')np=gp(r-1,c);if(k=='↓')np=gp(r+1,c);if(k=='PGUP')np=gp(r-10,c);if(k=='PGDN')np=gp(r+10,c);
+ if(k=='HOME')np=gp(r,0);if(k=='END')np=gp(r,1e9);
+ if(k=='TAB'){document.execCommand('insertText',false,'    ');return}
+ if(k=='ESC'){ta.blur();return}
+ ta.setSelectionRange(np,np);const row=v.slice(0,np).split('\n').length-1,y=row*lh();
+ if(y<ta.scrollTop)ta.scrollTop=y;else if(y+lh()+16>ta.scrollTop+ta.clientHeight)ta.scrollTop=y+lh()+16-ta.clientHeight;pos()}
+document.querySelectorAll('#acc button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();mv(b.textContent)}));
+ta.onfocus=()=>$('#acc').classList.add('on');ta.onblur=()=>$('#acc').classList.remove('on');
+const vv=window.visualViewport;function fit(){const h=vv?vv.height:innerHeight;document.documentElement.style.height=h+'px';document.body.style.height=h+'px';scrollTo(0,0)}
+if(vv){vv.addEventListener('resize',fit);vv.addEventListener('scroll',fit)}fit();
+/* ---------- tabs / drawer ---------- */
+const tab=t=>{$('#ed').hidden=t;$('#tm').hidden=!t;$('#tE').classList.toggle('on',!t);$('#tT').classList.toggle('on',t)};
+$('#tE').onclick=()=>tab(false);$('#tT').onclick=()=>tab(true);
+const dr=o=>$('#drawer').hidden=!o;$('#menu').onclick=()=>dr(true);$('#dback').onclick=()=>dr(false);
+$('#list').onclick=e=>{const i=e.target.closest('button')?.dataset.i;if(i!=null){S.cur=+i;save();load();dr(false)}};
+$('#rn').oninput=e=>{F().name=e.target.value.replace(/[^\w\- ]/g,'')||'untitled';save();load();$('#rn').value=F().name};
+$('#nw').onclick=()=>{S.files.push({id:uid(),name:'untitled'+S.files.length,lang:F().lang,code:T[F().lang],sin:''});S.cur=S.files.length-1;save();load()};
+$('#dup').onclick=()=>{S.files.push({...F(),id:uid(),name:F().name+'_copy'});S.cur=S.files.length-1;save();load()};
+let dc=0;$('#del').onclick=e=>{if(!dc){dc=1;e.target.textContent='Tap again to confirm';setTimeout(()=>{dc=0;e.target.textContent='Delete'},2500);return}
+ dc=0;e.target.textContent='Delete';S.files.splice(S.cur,1);if(!S.files.length)S.files.push({id:uid(),name:'main',lang:'cpp',code:T.cpp,sin:''});S.cur=0;save();load()};
+function copy(t){try{navigator.clipboard.writeText(t).catch(()=>fb())}catch(e){fb()}function fb(){const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();document.execCommand('copy');x.remove()}}
+$('#cp').onclick=()=>{copy(ta.value);dr(false)};
+$('#cl').onclick=()=>{ta.value='';ta.oninput();dr(false)};
+$('#fm').onclick=()=>{S.fs=Math.max(12,S.fs-1);save();load()};$('#fp').onclick=()=>{S.fs=Math.min(20,S.fs+1);save();load()};
+$('#imp').onclick=()=>$('#fi').click();
+$('#fi').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const x=f.name.split('.').pop(),lg={cpp:'cpp',c:'c',py:'python',java:'java',js:'js'}[x]||F().lang;
+ S.files.push({id:uid(),name:f.name.replace(/\.\w+$/,''),lang:lg,code:r.result,sin:''});S.cur=S.files.length-1;save();load();dr(false)};r.readAsText(f)};
+/* ---------- terminal / run ---------- */
+const out=$('#out');
+function pr(t,c){const s=document.createElement('span');s.className=c||'';s.textContent=t;out.appendChild(s);out.scrollTop=out.scrollHeight}
+$('#clo').onclick=()=>out.textContent='';$('#cpo').onclick=()=>copy(out.textContent);
+$('#run').onclick=async()=>{
+ const f=F(),t0=performance.now(),sin=$('#sin').value;tab(true);out.textContent='';
+ const errs=D.filter(d=>d.sev=='e');
+ if(errs.length){pr(`Found ${errs.length} error(s) in the editor — fix these first:\n`,'ln-e');errs.slice(0,8).forEach(d=>pr(`  Ln ${d.line}: ${d.msg}\n`,'ln-e'));$('#stat').textContent='Blocked by errors';return}
+ $('#stat').textContent='⏳ Running…';$('#run').disabled=true;let code=0;
+ try{
+  if(f.lang=='js'){
+   const q=sin.split('\n');let i=0;const inp=()=>i<q.length?q[i++]:'';
+   const log=(...a)=>pr(a.map(x=>typeof x=='object'?JSON.stringify(x):String(x)).join(' ')+'\n');
+   const con={log,error:(...a)=>pr(a.join(' ')+'\n','ln-e'),warn:log,info:log};
+   const req=m=>m=='fs'?{readFileSync:()=>sin}:{};
+   try{new Function('console','input','readline','require',f.code)(con,inp,inp,req)}catch(e){pr(`${e.name}: ${e.message}\n`,'ln-e');code=1}
+  }else{
+   const r=await fetch('https://ce.judge0.com/submissions?base64_encoded=false&wait=true',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_code:f.code,language_id:L[f.lang].id,stdin:sin})});
+   if(!r.ok)throw new Error('Judge server replied '+r.status);
+   const j=await r.json();
+   if(j.compile_output)pr('Compilation error:\n'+j.compile_output+'\n','ln-e');
+   if(j.stdout)pr(j.stdout);
+   if(j.stderr)pr(j.stderr,'ln-e');
+   if(j.message)pr(j.message+'\n','ln-e');
+   pr(`\n[${j.status?.description}] ${j.time||0}s\n`,j.status?.id==3?'ln-s':'ln-e');code=j.status?.id==3?0:1}
+ }catch(e){pr("Couldn't reach the online judge ("+e.message+"). It needs internet access and a host that allows outside requests.\n",'ln-e');code=1}
+ $('#run').disabled=false;$('#stat').textContent=`${code?'✖':'✔'} exit ${code} · ${Math.round(performance.now()-t0)} ms`};
+load();
+</script></body></html>
